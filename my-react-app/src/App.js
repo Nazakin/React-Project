@@ -14,8 +14,8 @@ function App() {
     { id: 1, title:'Javascripts', body: 'Description'},
     { id: 2, title:'Javascripts 2', body: 'Description'},
     { id: 3, title:'Javascripts 3', body: 'Description'}
-  ])
-
+  ]) 
+  
   const createPost = (newPost) => {
     setPosts([...posts, newPost])
   }
