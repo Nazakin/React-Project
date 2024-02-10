@@ -20,8 +20,7 @@ function App() {
     setPosts([...posts, newPost])
   }
 
-
-
+ 
   return (
     <div className="App">
       <PostForm create={createPost}/>
