@@ -1,33 +1,48 @@
 
-import { useMemo, useRef, useState } from "react";
-import Counter from './components/Counter'
-import ClassCounter from "./components/ClassCounter";
-import PostItem from "./components/PostItem";
+import { useEffect, useMemo, useState } from "react";
 import './styles/App.css'
 import PostList from "./components/PostList";
 import MyButton from "./components/UI/button/MyButton";
-import MyInput from "./components/UI/input/MyInput";
 import PostForm from "./components/PostForm";
-import MySelect from "./components/UI/select/MySelect";
 import PostFilter from "./components/PostFilter";
 import MyModal from "./components/UI/modal/MyModal";
 import { usePosts } from "./hooks/usePosts";
-import axios from "axios";
+import PostService from "./API/PostService";
+import Loader from "./components/UI/loader/Loader";
+import { useFetching } from "./hooks/useFetching";
+import { getPageCount } from "./utils/pages"
 
 function App() {
   const [posts, setPosts] = useState([]);
-const [filter, setFilter] = useState({sort: '', query: ''})
-const [modal, setModal] = useState(false)
-const soretdAndSearchedPosts = usePosts(posts, filter.sort, filter.query);
+  const [filter, setFilter] = useState({sort: '', query: ''})
+  const [modal, setModal] = useState(false);
+  const [totalPages, setTotalPages] = useState(0);
+  const [limit, setLimit] = useState(10);
+  const [page, setPage] = useState(1);
+  const soretdAndSearchedPosts = usePosts(posts, filter.sort, filter.query);
+  let pagesArray = []
+  const total = useMemo(() => {
+    for (let index = 0; index < totalPages; index++) {
+      pagesArray.push(index + 1);
+      
+    }
+  }, pagesArray)
+
+
+  const [fetchPosts, isPostsLoading, postError] = useFetching( async () => {
+    const response = await PostService.getAll(limit, page);
+      setPosts(response.data)
+      const totalCount = (response.headers['x-total-count'])
+      setTotalPages(getPageCount(totalCount, limit))
+  })
+
+  useEffect(() => {
+    fetchPosts()
+  }, [])
 
   const createPost = (newPost) => {
-    setPosts([...posts, newPost])
+    setPosts([...posts, newPost]) 
     setModal(false)
-  }
-
-  async function fetchPosts() {
-    const response = await axios.get('https://jsonplaceholder.typicode.com/posts')
-    console.log(response.data)
   }
 
   const removePost = (post) => {
@@ -38,7 +53,6 @@ const soretdAndSearchedPosts = usePosts(posts, filter.sort, filter.query);
  
   return (
     <div className="App">
-      <button onClick={fetchPosts}>GET POSTS</button>
       <MyButton style={{marginTop: '30px'}} onClick={() => setModal(true)}>
         Create Post
       </MyButton>
@@ -51,7 +65,15 @@ const soretdAndSearchedPosts = usePosts(posts, filter.sort, filter.query);
       filter={filter}
       setFilter={setFilter}
       />
-      <PostList remove={removePost} posts={soretdAndSearchedPosts} title="Posts about JS"/> 
+      {postError &&
+      <h1> Error: ${postError}</h1>}
+      {isPostsLoading
+      ? <div style={{display: 'flex', justifyContent: 'center', marginTop: '50px'}}>
+        <Loader /> 
+      </div> 
+      : <PostList remove={removePost} posts={soretdAndSearchedPosts} title="Posts about JS"/> 
+      }
+      
       
     </div>
   );
